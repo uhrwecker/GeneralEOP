@@ -4,12 +4,12 @@ import scipy.optimize as op
 
 def equations(p, s=1e-6, r=6):
     """
-    For a fixed value of r and s, these equations determine the energy and angular momentum of a
-    spinning timelike object on a circular orbit at r=r.
-    :param p: iterable; [E, L]
-    :param s: float; spin of the timelike object
-    :param r: float; orbit of the timelike object
-    :return: (first, second); results of the determining equations.
+        For a fixed value of r and s, these equations determine the energy and angular momentum of a
+        spinning timelike object on a circular orbit at r=r.
+        :param p: iterable; [E, L]
+        :param s: float; spin of the timelike object
+        :param r: float; orbit of the timelike object
+        :return: (first, second); results of the determining equations.
     """
     u = 1/r
     E, L = p
@@ -29,13 +29,14 @@ def equations(p, s=1e-6, r=6):
 
 def get_com(s, r0, rotation='positive'):
     """
-    Function used to calculate the constants of motion for a spinning timelike object at fixed orbit radius r0.
-    Includes the root-finding routine (subset of scipy).
-    :param s: float; spin of the timelike object
-    :param r0: float; orbit of the timelike object
-    :param rotation: ['positive', 'negative']; determining equations are oblivious to the sign of L; this is determined
-    by the rotation parameter.
-    :return: [E, r, L]; iterable of the solutions for the circular orbit, including the orbit radius (for convinience).
+        Function used to calculate the constants of motion for a spinning timelike object at fixed orbit radius r0.
+        Includes the root-finding routine (subset of scipy).
+        :param s: float; spin of the timelike object
+        :param r0: float; orbit of the timelike object
+        :param rotation: ['positive', 'negative']; determining equations are oblivious to the sign of L; this is
+        determined by the rotation parameter.
+        :return: [E, r, L]; iterable of the solutions for the circular orbit, including the orbit radius
+                            (for convenience).
     """
     factor = 1
     if rotation == 'negative':

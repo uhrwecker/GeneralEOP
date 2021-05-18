@@ -3,6 +3,14 @@ import scipy.optimize as op
 
 
 def equations(p, s=1e-6):
+    """
+    For a fixed value of r and s, these equations determine the energy and angular momentum of a
+    spinning timelike object on a circular orbit at r=r.
+    :param p: iterable; [E, L]
+    :param s: float; spin of the timelike object
+    :param r: float; orbit of the timelike object
+    :return: (first, second); results of the determining equations.
+    """
     E, u, L = p
 
     # first:
