@@ -1,50 +1,32 @@
 import numpy as np
 from scipy.integrate import odeint
-import os
-import sys
-import contextlib
 
 from em import emitter
 from photon import light, geodesics
 
 
-def fileno(file_or_fd):
-    fd = getattr(file_or_fd, 'fileno', lambda: file_or_fd)()
-    if not isinstance(fd, int):
-        raise ValueError("Expected a file (`.fileno()`) or a file descriptor")
-    return fd
-
-
-@contextlib.contextmanager
-def stdout_redirected(to=os.devnull, stdout=None):
-    """
-    https://stackoverflow.com/a/22434262/190597 (J.F. Sebastian)
-    """
-    if stdout is None:
-       stdout = sys.stdout
-
-    stdout_fd = fileno(stdout)
-    # copy stdout_fd before it is overwritten
-    # NOTE: `copied` is inheritable on Windows when duplicating a standard stream
-    with os.fdopen(os.dup(stdout_fd), 'wb') as copied:
-        stdout.flush()  # flush library buffers that dup2 knows nothing about
-        try:
-            os.dup2(fileno(to), stdout_fd)  # $ exec >&to
-        except ValueError:  # filename
-            with open(to, 'wb') as to_file:
-                os.dup2(to_file.fileno(), stdout_fd)  # $ exec > to
-        try:
-            yield stdout # allow code to be run with the redirected stdout
-        finally:
-            # restore stdout to its previous value
-            # NOTE: dup2 makes stdout_fd inheritable unconditionally
-            stdout.flush()
-            os.dup2(copied.fileno(), stdout_fd)  # $ exec >&copied
-
-
 class ODESolver:
+    """
+        Wrapper class for solving the differential equations for the motion of timelike geodesics.
+    """
     def __init__(self, s, theta0, phi0, chi, alpha, beta, r=None, rotation='positive',
                  start=0, stop=7, num=5000, abserr=1e-7, relerr=1e-7):
+        """
+            :param s: float; spin of the timelike object
+            :param theta0: float; initial angle theta of the lightlike particle
+            :param phi0: float; initial angle phi of the lightlike particle
+            :param chi: float; scaling parameter for the photon momentum, invariant for the application
+            :param alpha: float; phi-like emission angle
+            :param beta: float; theta-like emission angle
+            :param r: float; initial radius parameter of the circular orbit of the timelike object
+            :param rotation: rotation: ['positive', 'negative']; determining equations are oblivious to the sign of L;
+                   this is determined by the rotation parameter.
+            :param start: float; start of the affine parameter range for integration
+            :param stop: float; stop of the affine parameter range for integration
+            :param num: int; number of steps in integration
+            :param abserr: float; least absolute error for integration
+            :param relerr: float; least relative error for integration
+        """
 
         self.emitter = emitter.EmitterProperties(s, r, rotation)
         self.photon = light.PhotonProperties(self.emitter, chi, alpha, beta)
@@ -66,9 +48,12 @@ class ODESolver:
         self.dt, self.dr, self.dtheta, self.dphi = self.photon.get_ic()
 
     def solve(self):
+        """
+            Main routine for solving with the previously specified initial conditions
+            :return: iter; [sigma, result] where sigma is the array of affine parameter, and result includes all [x, x']
+        """
         psi = np.array([self.t0, self.dt, self.r0, self.dr, self.theta0, self.dtheta, self.phi0, self.dphi])
 
-        #with stdout_redirected():
         result = odeint(geodesics.geod, psi, self.sigma, atol=self.abserr, rtol=self.relerr)
         if (result[:, 2] < 2.5).any():
             result[:, 2] = np.array([np.nan for n in range(len(result[:, 2]))])
@@ -76,6 +61,10 @@ class ODESolver:
         return self.sigma, result
 
     def get_data(self):
+        """
+            Routine to get all important data in a dictionary, for saving purposes.
+            :return: dict; dictionary that includes all important hyperparameters.
+        """
         s = self.emitter.get_s()
         vr, vphi, gamma = self.emitter.get_velocities()
         Eph, Lph, Qph = self.photon.get_com()
@@ -111,11 +100,21 @@ class ODESolver:
         return data
 
     def set_alpha(self, alpha, recalc=True):
+        """
+            Set (and possibly recalc) the emission angle alpha.
+            :param alpha: phi-like emission angle
+            :param recalc: bool; determines if the COM and physical velocities are recalculated for the given s.
+        """
         self.photon.set_alpha(alpha, recalc)
         if recalc:
             self.dt, self.dr, self.dtheta, self.dphi = self.photon.get_ic()
 
     def set_beta(self, beta, recalc=True):
+        """
+            Set (and possibly recalc) the emission angle beta.
+            :param beta: theta-like emission angle
+            :param recalc: bool; determines if the COM and physical velocities are recalculated for the given s.
+        """
         self.photon.set_beta(beta, recalc)
         if recalc:
             self.dt, self.dr, self.dtheta, self.dphi = self.photon.get_ic()

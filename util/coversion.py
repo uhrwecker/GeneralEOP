@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def get_phi(x, y, tol):
     sig = []
 
@@ -12,6 +13,7 @@ def get_phi(x, y, tol):
             sig.append(np.arctan(ye / xe) + np.sign(ye) * np.pi)
 
     return np.array(sig)
+
 
 def get_rphitheta(r0, phi0, theta0, dr, tol=1e-5, num=3):
     p = np.linspace(0, 2*np.pi, num=num, endpoint=False)
